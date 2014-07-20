@@ -249,6 +249,8 @@
                                 + 'aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>')
                             .append('<h4 class="modal-title" id="hfe-importexport-dialog-title">Export</h4>')
                             .append($('<div class="modal-body"/>')
+                                .append('<p><strong>Note:</strong> you are limited by the capacity of '
+                                    + '<code>&lt;textarea&gt;</code> in your browser and OS.</p>')
                                 .append('<textarea class="hfe-importexport-dialog-hex" '
                                     + 'style="width: 100%; height: 100%; min-height: 300px" />')
                                 .append($('<div class="modal-footer"/>')

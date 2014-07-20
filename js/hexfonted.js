@@ -26,11 +26,18 @@
             hexFontCharWidth: 8,
             hexFontCharHeight: 16,
             pixelsProportional: true,
+            fontListCharHorizontalPadding: 15,
+            fontListCharVerticalPadding: 15,
+            fontListRightScrollbarPadding: 20,
             listEditorGap: 20,
             pixelFilledColor: '#000',
             pixelEmptyColor: '#fff',
             charEditorOutOfBoundsColor: '#ccc',
-            charEditorInBoundsColor: '#fff'
+            charEditorBackgroundColor: '#fff',
+            charEditorInBoundsColor: '#fff',
+            fontListBackgroundColor: '#fff',
+            fontListSelectionBackgroundColor: '#eee',
+            fontListGridColor: '#ccc'
         };
         var $element = $(element);
         var plugin = this;
@@ -42,17 +49,11 @@
         {
             plugin.settings = $.extend({}, defaults, options);
 
-            for (var row = 0; row < plugin.settings.hexFontCharHeight; row++)
-            {
-                plugin.charArray[row] = [];
-                for (var col = 0; col < plugin.settings.hexFontCharWidth; col++)
-                {
-                    plugin.charArray[row].push(0);
-                }
-            }
-
             plugin.fixedColor = null;
             plugin.lastColor = null;
+
+            plugin.selectedCharX = null;
+            plugin.selectedCharY = null;
 
             plugin.canvasEffectiveWidth = plugin.settings.charEditorWidth;
             plugin.canvasEffectiveHeight = plugin.settings.charEditorHeight;
@@ -75,19 +76,29 @@
                 plugin.pixelWidth = pixelSize;
                 plugin.pixelHeight = pixelSize;
 
-                console.log('hfe: pixelSize = ' + pixelSize);
+                //console.log('hfe: pixelSize = ' + pixelSize);
             }
 
-            /*$.jCanvas.extend({
-                name: 'getPixel',
-                fn: function(ctx, params)
-                {
-                    var p = params;
-                    alert('works');
-                    var pixel = ctx.getImageData(p.x, p.y, 1, 1).data;
-                    $(this).data('pixelReturnValue', '#' + ((pixel[0] << 16) | (pixel[1] << 8) | pixel[2]).toString(16));
-                }
-            });*/
+            plugin.numberOfChars = 245;
+            plugin.generateSampleChars();
+
+            plugin.charsPerRow = Math.floor(
+                (plugin.settings.fontListWidth - plugin.settings.fontListRightScrollbarPadding)
+                / (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2));
+
+            plugin.fontListCanvasWidth =
+                (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2)
+                * Math.floor(
+                    (plugin.settings.fontListWidth - plugin.settings.fontListRightScrollbarPadding)
+                    /  (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2));
+
+            plugin.numberOfCharRows = Math.ceil(plugin.numberOfChars  / plugin.charsPerRow);
+
+            plugin.fontListCanvasHeight =
+                (plugin.settings.hexFontCharHeight + 2 * plugin.settings.fontListCharVerticalPadding + 2)
+                * plugin.numberOfCharRows;
+
+            //console.log(plugin);
 
             $element.addClass('hexfonted');
             plugin.createUI();
@@ -104,8 +115,9 @@
                 }
             });
 
-            plugin.drawBackground();
-            plugin.updateHex();
+            plugin.drawCharList();
+            plugin.drawCharEditorBackground();
+            plugin.updateCharFromList(0,0);
             plugin.initEvents();
         };
 
@@ -148,10 +160,14 @@
             var $tempCanvas = $('<div class="hfe-list-wrapper"/>').appendTo($element);
             var fontListHorizPadding = parseInt($tempCanvas.css('padding-left'))
                 + parseInt($tempCanvas.css('padding-right'));
+            var fontListVertPadding = parseInt($tempCanvas.css('padding-top'))
+                + parseInt($tempCanvas.css('padding-bottom'));
             $tempCanvas.remove();
             $tempCanvas = $('<div class="hfe-editor-wrapper"/>').appendTo($element);
             var charEditorHorizPadding = parseInt($tempCanvas.css('padding-left'))
                 + parseInt($tempCanvas.css('padding-right'));
+            var charEditorVertPadding = parseInt($tempCanvas.css('padding-top'))
+                + parseInt($tempCanvas.css('padding-bottom'));
             $tempCanvas.remove();
             $tempCanvas = null;
 
@@ -159,16 +175,24 @@
                 .append($('<div class="col-sm-12 col-lg-12"/>')
                     .append($('<div class="hfe-list-container" style="width:'
                         + (plugin.settings.fontListWidth + fontListHorizPadding + 2) + 'px"/>')
-                        .append($('<div class="hfe-list-wrapper"/>')
-                            .append('<canvas width="' + plugin.settings.fontListWidth
-                                + '" height="' + plugin.settings.fontListHeight + '"/>')
+                        .append($('<div class="hfe-list-wrapper" style="width: '
+                            + (plugin.settings.fontListWidth + fontListHorizPadding + 2) + 'px; height: '
+                            + (plugin.settings.fontListHeight + fontListVertPadding + 2) + 'px"/>')
+                            .append($('<div class="hfe-list-wrapper-inner" style="width: '
+                                + plugin.fontListCanvasWidth + 'px; height: '
+                                + plugin.fontListCanvasHeight + 'px"/>')
+                                .append('<canvas width="' + plugin.fontListCanvasWidth
+                                    + '" height="' + plugin.fontListCanvasHeight + '"/>')
+                            )
                         )
                     )
                     .append($('<div class="hfe-editor-container" style="width: '
                         + (plugin.settings.charEditorWidth + charEditorHorizPadding + 2) + 'px; margin-left: '
                         + (plugin.settings.fontListWidth + fontListHorizPadding + 2
                             + plugin.settings.listEditorGap) + 'px"/>')
-                        .append($('<div class="hfe-editor-wrapper"/>')
+                        .append($('<div class="hfe-editor-wrapper" style="width: '
+                            + (plugin.settings.charEditorWidth + charEditorHorizPadding + 2) + 'px; height: '
+                            + (plugin.settings.charEditorHeight + charEditorVertPadding + 2) + 'px"/>')
                             .append('<canvas width="' + plugin.settings.charEditorWidth
                                 + '" height="' + plugin.settings.charEditorHeight + '"/>')
                         )
@@ -224,6 +248,7 @@
             $element.find('.hfe-confirm-clear-dialog-yes-button').on('click', plugin.doClearChar);
             $(document).on('mouseup', plugin.editorOnMouseUp);
             //$element.find('.hfe-editor-wrapper>canvas').on('click', plugin.editorOnMouseClick);
+            $element.find('.hfe-list-wrapper canvas').on('click', plugin.listOnClick);
         };
 
         plugin.editorOnMouseMove = function(evt)
@@ -297,6 +322,7 @@
         plugin.togglePixel = function(x, y)
         {
             //console.log('243: plugin.charArray[' + y + '][' + x + '] = ' + plugin.charArray[y][x]);
+            var color;
             if (plugin.charArray[y][x] == 1)
             {
                 color = plugin.settings.pixelEmptyColor;
@@ -323,25 +349,29 @@
                 height: plugin.pixelHeight
             });
 
-            plugin.updateHex();
+            plugin.updateProps();
+            plugin.updateListFromChar(plugin.selectedCharX, plugin.selectedCharY);
         };
 
-        plugin.drawBackground = function()
+        plugin.drawCharEditorBackground = function()
         {
-
-
-// plugin.settings.charEditorOutOfBoundsColor
-
             $element.find('.hfe-editor-wrapper canvas').drawRect({
+                fillStyle: plugin.settings.charEditorBackgroundColor,
+                x: 0,
+                y: 0,
+                fromCenter: false,
+                width: plugin.settings.charEditorWidth,
+                height: plugin.settings.charEditorHeight
+            })
+            .drawRect({
                 fillStyle: plugin.hatchPattern,
                 x: 0,
                 y: 0,
                 fromCenter: false,
                 width: plugin.settings.charEditorWidth,
                 height: plugin.settings.charEditorHeight
-            });
-
-            $element.find('.hfe-editor-wrapper canvas').drawRect({
+            })
+            .drawRect({
                 fillStyle: plugin.settings.charEditorInBoundsColor,
                 x: plugin.pixelStartX,
                 y: plugin.pixelStartY,
@@ -351,7 +381,154 @@
             });
         };
 
-        plugin.updateHex = function()
+        plugin.drawEditorSingleChar = function()
+        {
+            var color;
+            for (var y = 0; y < plugin.charArray.length; y++)
+            {
+                for (var x = 0; x < plugin.charArray[y].length; x++)
+                {
+                    if (plugin.charArray[y][x] == 1)
+                    {
+                        color = plugin.settings.pixelFilledColor;
+                    }
+                    else if (plugin.charArray[y][x] == 0)
+                    {
+                        color = plugin.settings.pixelEmptyColor;
+                    }
+                    $element.find('.hfe-editor-wrapper canvas').drawRect({
+                        fillStyle: color,
+                        x: plugin.pixelStartX + x * plugin.pixelWidth,
+                        y: plugin.pixelStartY + y * plugin.pixelHeight,
+                        fromCenter: false,
+                        width: plugin.pixelWidth,
+                        height: plugin.pixelHeight
+                    });
+                }
+            }
+        };
+
+        plugin.drawCharListSingleChar = function(x, y, selected)
+        {
+            var fillColor = plugin.settings.fontListBackgroundColor;
+
+            if (selected)
+            {
+                fillColor = plugin.settings.fontListSelectionBackgroundColor;
+            }
+
+            $element.find('.hfe-list-wrapper canvas').drawRect({
+                strokeStyle: plugin.settings.fontListGridColor,
+                fillStyle: fillColor,
+                x: x * (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2),
+                y: y * (plugin.settings.hexFontCharHeight + 2 * plugin.settings.fontListCharVerticalPadding + 2),
+                fromCenter: false,
+                width: (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2),
+                height: (plugin.settings.hexFontCharHeight + 2 * plugin.settings.fontListCharVerticalPadding + 2)
+            });
+        };
+
+        plugin.drawCharList = function()
+        {
+            $element.find('.hfe-list-wrapper canvas').drawRect({
+                fillStyle: plugin.settings.fontListBackgroundColor,
+                x: 0,
+                y: 0,
+                fromCenter: false,
+                width: plugin.fontListCanvasWidth,
+                height: plugin.fontListCanvasHeight
+            });
+
+            for (var row = 0; row < plugin.numberOfCharRows; row++)
+            {
+                for (var col = 0; col < plugin.charsPerRow; col++)
+                {
+                    plugin.drawCharListSingleChar(col, row,
+                        plugin.selectedCharX != null && plugin.selectedCharY != null
+                            && plugin.selectedCharX == col && plugin.selectedCharY == row);
+                }
+            }
+        };
+
+        String.prototype.splitToChunks = function(len)
+        {
+            var chunks = [];
+            for (var index = 0; index < this.length; index += len)
+            {
+                chunks.push(this.substr(index, len));
+            }
+            return chunks;
+        };
+
+        plugin.updateCharFromList = function(x, y)
+        {
+            var theChar = plugin.getCharAt(x, y);
+            if (theChar != null)
+            {
+                plugin.charArray = [];
+                var lines = theChar.hex.splitToChunks(2);
+                for (var currentLine = 0; currentLine < lines.length; currentLine++)
+                {
+                    var lineVal = parseInt(lines[currentLine], 16);
+                    var charRow = [];
+                    for (var currentCol = 0; currentCol < plugin.settings.hexFontCharWidth; currentCol++)
+                    {
+                        charRow.push(lineVal & 1);
+                        lineVal >>= 1;
+                    }
+                    charRow.reverse();
+                    plugin.charArray.push(charRow);
+                }
+            }
+
+            plugin.charCode = theChar.code;
+        };
+
+        plugin.updateListFromChar = function(x, y)
+        {
+            var result = '';
+            for (var row = 0; row < plugin.charArray.length; row++)
+            {
+                var bByte = 0;
+                for (var col = 0; col < plugin.charArray[row].length; col++)
+                {
+                    bByte |= (plugin.charArray[row][col] << (plugin.settings.hexFontCharWidth-1 - col));
+                }
+                result += ('00' + (bByte).toString(16).toUpperCase()).slice(-2);
+            }
+
+            var theChar = plugin.getCharAt(x, y);
+
+            plugin.setCharAt(x, y, {
+                code: plugin.charCode,
+                hex: result
+            });
+        };
+
+        plugin.listOnClick = function(evt)
+        {
+            var x = Math.floor(evt.offsetX
+                / (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2));
+            var y = Math.floor(evt.offsetY
+                / (plugin.settings.hexFontCharHeight + 2 * plugin.settings.fontListCharVerticalPadding + 2));
+
+            if (plugin.selectedCharX != null && plugin.selectedCharY != null)
+            {
+                plugin.drawCharListSingleChar(plugin.selectedCharX, plugin.selectedCharY, false);
+            }
+
+            plugin.drawCharListSingleChar(x, y, true);
+
+            plugin.selectedCharX = x;
+            plugin.selectedCharY = y;
+
+            plugin.updateCharFromList(x, y);
+            plugin.drawCharEditorBackground();
+            plugin.drawEditorSingleChar();
+            plugin.updateProps();
+        };
+
+        plugin.updateProps = function()
         {
             var result = '';
             for (var row = 0; row < plugin.charArray.length; row++)
@@ -364,11 +541,47 @@
                 result += ('00' + (bByte).toString(16).toUpperCase()).slice(-2);
             }
             $element.find('.hfe-properties-hex').text(result);
+            $element.find('.hfe-properties-code').text(plugin.charCode);
         };
 
         plugin.clearChar = function()
         {
             $('#hfe-confirm-clear-dialog').modal();
+        };
+
+        plugin.generateSampleChars = function()
+        {
+            plugin.chars = [];
+            for (var currentChar = 0; currentChar < plugin.numberOfChars; currentChar++)
+            {
+                plugin.chars.push({
+                    code: ('00' + currentChar.toString(16).toUpperCase()).slice(-2),
+                    hex: '00000000000000000000000000000000'
+                });
+            }
+        };
+
+        plugin.getCharAt = function(x, y)
+        {
+            var index = y * plugin.charsPerRow + x;
+            if (index < plugin.chars.length)
+            {
+                return plugin.chars[index];
+            }
+            else
+            {
+                return null;
+            }
+        };
+
+        plugin.setCharAt = function(x, y, ch)
+        {
+            var index = y * plugin.charsPerRow + x;
+            if (index < plugin.chars.length)
+            {
+                plugin.chars[index].code = ch.code;
+                plugin.chars[index].hex = ch.hex;
+            }
         };
 
         plugin.doClearChar = function()
@@ -388,7 +601,8 @@
                 width: plugin.canvasEffectiveWidth,
                 height: plugin.canvasEffectiveHeight
             });
-            plugin.updateHex();
+            plugin.updateProps();
+            plugin.updateListFromChar(plugin.selectedCharX, plugin.selectedCharY);
         };
 
         plugin.init();

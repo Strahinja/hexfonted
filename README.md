@@ -11,7 +11,7 @@ HexFontEd is an editor of bitmap fonts in the hex format by Roman Czyborra
 Usage
 -----
 
-1. Include jQuery, Bootstrap and HexFontEd CSS and JS.
+1. Include jQuery, jCanvas, Bootstrap and HexFontEd CSS and JS.
 2. Create a `<div>`, for example `<div id="somename">`.
 3. Include a call to HexFontEd, for example `$('#somename').hexfonted()`.
 

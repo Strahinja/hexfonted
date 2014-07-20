@@ -97,3 +97,8 @@ dl.hfe-properties dd
     display: block;
     float: left;
 }
+
+.hfe-importexport-dialog-hex
+{
+    font-family: monospace;
+}

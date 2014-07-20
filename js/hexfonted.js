@@ -79,7 +79,7 @@
                 //console.log('hfe: pixelSize = ' + pixelSize);
             }
 
-            plugin.numberOfChars = 245;
+            plugin.numberOfChars = 255;
             plugin.generateSampleChars();
 
             plugin.charsPerRow = Math.floor(
@@ -139,17 +139,19 @@
                             .append($('<li class="dropdown"/>')
                                 .append('<a data-toggle="dropdown" class="dropdown-toggle" href="#" id="hfe-font-menu">Font</a>')
                                 .append($('<ul class="dropdown-menu" role="menu" aria-labelledby="hfe-font-menu"/>')
-                                    .append($('<li/>').append('<a id="hfe-font-new-item" href="#">New</a>'))
-                                    .append($('<li/>').append('<a id="hfe-font-open-item" href="#">Open...</a>'))
-                                    .append($('<li/>').append('<a id="hfe-font-save-item" href="#">Save...</a>'))
+                                    .append($('<li/>').append('<a class="hfe-font-new-item" href="#">New</a>'))
+                                    .append($('<li/>').append('<a class="hfe-font-import-item" href="#">Import...</a>'))
+                                    .append($('<li/>').append('<a class="hfe-font-export-item" href="#">Export...</a>'))
+                                    //.append($('<li/>').append('<a id="hfe-font-open-item" href="#">Open...</a>'))
+                                    //.append($('<li/>').append('<a id="hfe-font-save-item" href="#">Save...</a>'))
                                 )
                             )
                             .append($('<li class="dropdown"/>')
                                 .append('<a data-toggle="dropdown" class="dropdown-toggle" href="#" id="hfe-edit-menu">Edit</a>')
                                 .append($('<ul class="dropdown-menu" role="menu" aria-labelledby="hfe-edit-menu"/>')
-                                    .append($('<li/>').append('<a id="hfe-edit-copy-item" href="#">Copy</a>'))
-                                    .append($('<li/>').append('<a id="hfe-edit-cut-item" href="#">Cut</a>'))
-                                    .append($('<li/>').append('<a id="hfe-edit-paste-item" href="#">Paste</a>'))
+                                    .append($('<li/>').append('<a class="hfe-edit-copy-item" href="#">Copy</a>'))
+                                    .append($('<li/>').append('<a class="hfe-edit-cut-item" href="#">Cut</a>'))
+                                    .append($('<li/>').append('<a class="hfe-edit-paste-item" href="#">Paste</a>'))
                                 )
                             )
                         )
@@ -237,6 +239,29 @@
                     )
                 )
                 .appendTo($element);
+
+            $('<div class="modal fade" id="hfe-importexport-dialog" tabindex="-1" role="dialog" '
+                + 'aria-labelledby="hfe-importexport-dialog-title" aria-hidden="true"/>')
+                .append($('<div class="modal-dialog"/>')
+                    .append($('<div class="modal-content"/>')
+                        .append($('<div class="modal-header"/>')
+                            .append('<button type="button" class="close" data-dismiss="modal"><span '
+                                + 'aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>')
+                            .append('<h4 class="modal-title" id="hfe-importexport-dialog-title">Export</h4>')
+                            .append($('<div class="modal-body"/>')
+                                .append('<textarea class="hfe-importexport-dialog-hex" '
+                                    + 'style="width: 100%; height: 100%; min-height: 300px" />')
+                                .append($('<div class="modal-footer"/>')
+                                    .append('<button type="button" class="btn btn-default '
+                                        + 'hfe-importexport-dialog-cancel-button" data-dismiss="modal">Cancel</button>')
+                                    .append('<button type="button" class="btn btn-primary '
+                                        + 'hfe-importexport-dialog-ok-button" data-dismiss="modal">Export</button>')
+                                )
+                            )
+                        )
+                    )
+                )
+                .appendTo($element);
         };
 
         plugin.initEvents = function()
@@ -249,6 +274,19 @@
             $(document).on('mouseup', plugin.editorOnMouseUp);
             //$element.find('.hfe-editor-wrapper>canvas').on('click', plugin.editorOnMouseClick);
             $element.find('.hfe-list-wrapper canvas').on('click', plugin.listOnClick);
+
+            $element.find('.hfe-importexport-dialog-ok-button').on('click', plugin.doImport);
+
+            $element.find('.hfe-font-import-item').on('click', function(evt){
+                evt.stopPropagation();
+                plugin.importAction();
+                return false;
+            });
+            $element.find('.hfe-font-export-item').on('click', function(evt){
+                evt.stopPropagation();
+                plugin.exportAction();
+                return false;
+            });
         };
 
         plugin.editorOnMouseMove = function(evt)
@@ -426,6 +464,41 @@
                 width: (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2),
                 height: (plugin.settings.hexFontCharHeight + 2 * plugin.settings.fontListCharVerticalPadding + 2)
             });
+
+            var color;
+            var theChar = plugin.getCharAt(x, y);
+            if (theChar != null)
+            {
+                var matrix = plugin.hexToArray(theChar.hex);
+                for (var py = 0; py < matrix.length; py++)
+                {
+                    for (var px = 0; px < matrix[py].length; px++)
+                    {
+                        if (matrix[py][px] == 1)
+                        {
+                            color = plugin.settings.pixelFilledColor;
+                        }
+                        else if (matrix[py][px] == 0)
+                        {
+                            color = plugin.settings.pixelEmptyColor;
+                        }
+                        $element.find('.hfe-list-wrapper canvas').drawRect({
+                            fillStyle: color,
+                            x: px + plugin.settings.fontListCharHorizontalPadding
+                                + x * (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2),
+                                //plugin.pixelStartX + x * plugin.pixelWidth,
+                            y:  py + plugin.settings.fontListCharVerticalPadding
+                                + y * (plugin.settings.hexFontCharHeight + 2 * plugin.settings.fontListCharVerticalPadding + 2),
+                                //plugin.pixelStartY + y * plugin.pixelHeight,
+                            fromCenter: false,
+                            width: 1,
+                            height: 1
+                        });
+                    }
+                }
+                matrix = null;
+                theChar = null;
+            }
         };
 
         plugin.drawCharList = function()
@@ -460,49 +533,64 @@
             return chunks;
         };
 
+        plugin.hexToArray = function(hex)
+        {
+            var result = [];
+
+            var lines = hex.splitToChunks(2);
+            for (var currentLine = 0; currentLine < lines.length; currentLine++)
+            {
+                var lineVal = parseInt(lines[currentLine], 16);
+                var charRow = [];
+                for (var currentCol = 0; currentCol < plugin.settings.hexFontCharWidth; currentCol++)
+                {
+                    charRow.push(lineVal & 1);
+                    lineVal >>= 1;
+                }
+                charRow.reverse();
+                result.push(charRow);
+            }
+
+            return result;
+        };
+
+        plugin.arrayToHex = function(matrix)
+        {
+            var result = '';
+
+            for (var row = 0; row < matrix.length; row++)
+            {
+                var bByte = 0;
+                for (var col = 0; col < matrix[row].length; col++)
+                {
+                    bByte |= (matrix[row][col] << (plugin.settings.hexFontCharWidth-1 - col));
+                }
+                result += ('00' + (bByte).toString(16).toUpperCase()).slice(-2);
+            }
+
+            return result;
+        };
+
         plugin.updateCharFromList = function(x, y)
         {
             var theChar = plugin.getCharAt(x, y);
             if (theChar != null)
             {
-                plugin.charArray = [];
-                var lines = theChar.hex.splitToChunks(2);
-                for (var currentLine = 0; currentLine < lines.length; currentLine++)
-                {
-                    var lineVal = parseInt(lines[currentLine], 16);
-                    var charRow = [];
-                    for (var currentCol = 0; currentCol < plugin.settings.hexFontCharWidth; currentCol++)
-                    {
-                        charRow.push(lineVal & 1);
-                        lineVal >>= 1;
-                    }
-                    charRow.reverse();
-                    plugin.charArray.push(charRow);
-                }
+                plugin.charArray = plugin.hexToArray(theChar.hex);
+                plugin.charCode = theChar.code;
             }
-
-            plugin.charCode = theChar.code;
         };
 
         plugin.updateListFromChar = function(x, y)
         {
-            var result = '';
-            for (var row = 0; row < plugin.charArray.length; row++)
-            {
-                var bByte = 0;
-                for (var col = 0; col < plugin.charArray[row].length; col++)
-                {
-                    bByte |= (plugin.charArray[row][col] << (plugin.settings.hexFontCharWidth-1 - col));
-                }
-                result += ('00' + (bByte).toString(16).toUpperCase()).slice(-2);
-            }
-
             var theChar = plugin.getCharAt(x, y);
 
             plugin.setCharAt(x, y, {
                 code: plugin.charCode,
-                hex: result
+                hex: plugin.arrayToHex(plugin.charArray)
             });
+
+            plugin.drawCharListSingleChar(x, y, true);
         };
 
         plugin.listOnClick = function(evt)
@@ -530,17 +618,7 @@
 
         plugin.updateProps = function()
         {
-            var result = '';
-            for (var row = 0; row < plugin.charArray.length; row++)
-            {
-                var bByte = 0;
-                for (var col = 0; col < plugin.charArray[row].length; col++)
-                {
-                    bByte |= (plugin.charArray[row][col] << (plugin.settings.hexFontCharWidth-1 - col));
-                }
-                result += ('00' + (bByte).toString(16).toUpperCase()).slice(-2);
-            }
-            $element.find('.hfe-properties-hex').text(result);
+            $element.find('.hfe-properties-hex').text(plugin.arrayToHex(plugin.charArray));
             $element.find('.hfe-properties-code').text(plugin.charCode);
         };
 
@@ -603,6 +681,73 @@
             });
             plugin.updateProps();
             plugin.updateListFromChar(plugin.selectedCharX, plugin.selectedCharY);
+            plugin.drawCharListSingleChar(plugin.selectedCharX, plugin.selectedCharY, true);
+        };
+
+        plugin.importAction = function()
+        {
+            var lang = 'en'; // TODO
+            $element.find('.hfe-importexport-dialog-hex').val('');
+            $element.find('.hfe-importexport-dialog-cancel-button')
+                .css('display', '');
+            $element.find('.hfe-importexport-dialog-ok-button')
+                .text($.hexfonted.prototype.msg[lang]['IMPORT_OK_LABEL']);
+            $element.find('#hfe-importexport-dialog-title')
+                .text($.hexfonted.prototype.msg[lang]['IMPORT_TITLE']);
+            $element.find('#hfe-importexport-dialog').modal();
+        };
+
+        plugin.doExport = function()
+        {
+            var result = '';
+            for (var currentChar = 0; currentChar < plugin.chars.length; currentChar++)
+            {
+                result += plugin.chars[currentChar].code
+                    + ':' + plugin.chars[currentChar].hex + '\n';
+            }
+
+            return result;
+        };
+
+        plugin.exportAction = function()
+        {
+            var lang = 'en'; // TODO
+
+            $element.find('.hfe-importexport-dialog-hex').val(plugin.doExport());
+
+            $element.find('.hfe-importexport-dialog-cancel-button')
+                .css('display', 'none');
+            $element.find('.hfe-importexport-dialog-ok-button')
+                .text($.hexfonted.prototype.msg[lang]['EXPORT_OK_LABEL']);
+            $element.find('#hfe-importexport-dialog-title')
+                .text($.hexfonted.prototype.msg[lang]['EXPORT_TITLE']);
+            $element.find('#hfe-importexport-dialog').modal();
+        };
+
+        plugin.doImport = function()
+        {
+            plugin.chars = [];
+            console.log('doimport: val = ');
+            console.log($element.find('.hfe-importexport-dialog-hex').val());
+            var lines = $element.find('.hfe-importexport-dialog-hex').val().split('\n');
+
+            for (var currentLine = 0; currentLine < lines.length; currentLine++)
+            {
+                var parts = lines[currentLine].split(':');
+                if (parts.length == 2)
+                {
+                    plugin.chars.push({
+                        code: parts[0],
+                        hex: parts[1]
+                    });
+                }
+            }
+
+            plugin.drawCharList();
+            plugin.drawCharEditorBackground();
+            plugin.updateCharFromList(0,0);
+
+            lines = null;
         };
 
         plugin.init();
@@ -610,7 +755,10 @@
 
     $.hexfonted.prototype.msg = {
         en: {
-
+            IMPORT_OK_LABEL: 'Import',
+            IMPORT_TITLE: 'Import hex font',
+            EXPORT_OK_LABEL: 'Close',
+            EXPORT_TITLE: 'Export hex font'
         }
     };
 

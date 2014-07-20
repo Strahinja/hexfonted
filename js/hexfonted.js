@@ -37,7 +37,8 @@
             charEditorInBoundsColor: '#fff',
             fontListBackgroundColor: '#fff',
             fontListSelectionBackgroundColor: '#eee',
-            fontListGridColor: '#ccc'
+            fontListGridColor: '#ccc',
+            fontListCrossColor: '#ccc'
         };
         var $element = $(element);
         var plugin = this;
@@ -160,15 +161,15 @@
                 .appendTo($element);
 
             var $tempCanvas = $('<div class="hfe-list-wrapper"/>').appendTo($element);
-            var fontListHorizPadding = parseInt($tempCanvas.css('padding-left'))
+            plugin.fontListHorizPadding = parseInt($tempCanvas.css('padding-left'))
                 + parseInt($tempCanvas.css('padding-right'));
-            var fontListVertPadding = parseInt($tempCanvas.css('padding-top'))
+            plugin.fontListVertPadding = parseInt($tempCanvas.css('padding-top'))
                 + parseInt($tempCanvas.css('padding-bottom'));
             $tempCanvas.remove();
             $tempCanvas = $('<div class="hfe-editor-wrapper"/>').appendTo($element);
-            var charEditorHorizPadding = parseInt($tempCanvas.css('padding-left'))
+            plugin.charEditorHorizPadding = parseInt($tempCanvas.css('padding-left'))
                 + parseInt($tempCanvas.css('padding-right'));
-            var charEditorVertPadding = parseInt($tempCanvas.css('padding-top'))
+            plugin.charEditorVertPadding = parseInt($tempCanvas.css('padding-top'))
                 + parseInt($tempCanvas.css('padding-bottom'));
             $tempCanvas.remove();
             $tempCanvas = null;
@@ -176,10 +177,10 @@
             $('<div class="container"/>')
                 .append($('<div class="col-sm-12 col-lg-12"/>')
                     .append($('<div class="hfe-list-container" style="width:'
-                        + (plugin.settings.fontListWidth + fontListHorizPadding + 2) + 'px"/>')
+                        + (plugin.settings.fontListWidth + plugin.fontListHorizPadding + 2) + 'px"/>')
                         .append($('<div class="hfe-list-wrapper" style="width: '
-                            + (plugin.settings.fontListWidth + fontListHorizPadding + 2) + 'px; height: '
-                            + (plugin.settings.fontListHeight + fontListVertPadding + 2) + 'px"/>')
+                            + (plugin.settings.fontListWidth + plugin.fontListHorizPadding + 2) + 'px; height: '
+                            + (plugin.settings.fontListHeight + plugin.fontListVertPadding + 2) + 'px"/>')
                             .append($('<div class="hfe-list-wrapper-inner" style="width: '
                                 + plugin.fontListCanvasWidth + 'px; height: '
                                 + plugin.fontListCanvasHeight + 'px"/>')
@@ -189,12 +190,12 @@
                         )
                     )
                     .append($('<div class="hfe-editor-container" style="width: '
-                        + (plugin.settings.charEditorWidth + charEditorHorizPadding + 2) + 'px; margin-left: '
-                        + (plugin.settings.fontListWidth + fontListHorizPadding + 2
+                        + (plugin.settings.charEditorWidth + plugin.charEditorHorizPadding + 2) + 'px; margin-left: '
+                        + (plugin.settings.fontListWidth + plugin.fontListHorizPadding + 2
                             + plugin.settings.listEditorGap) + 'px"/>')
                         .append($('<div class="hfe-editor-wrapper" style="width: '
-                            + (plugin.settings.charEditorWidth + charEditorHorizPadding + 2) + 'px; height: '
-                            + (plugin.settings.charEditorHeight + charEditorVertPadding + 2) + 'px"/>')
+                            + (plugin.settings.charEditorWidth + plugin.charEditorHorizPadding + 2) + 'px; height: '
+                            + (plugin.settings.charEditorHeight + plugin.charEditorVertPadding + 2) + 'px"/>')
                             .append('<canvas width="' + plugin.settings.charEditorWidth
                                 + '" height="' + plugin.settings.charEditorHeight + '"/>')
                         )
@@ -203,9 +204,19 @@
                             + plugin.settings.listEditorGap) + 'px"/>')*/
                             .append('<button type="button" style="margin-top: 15px" '
                                 + 'class="btn btn-default btn-sm hfe-clear-button">Clear</button>')
+                            .append('<button type="button" disabled="disabled" style="margin-top: 15px" '
+                                + 'class="btn btn-default btn-sm hfe-delete-button">Delete</button>')
                             .append($('<dl class="hfe-properties"/>')
                                 .append('<dt>Code</dt>')
-                                .append('<dd class="hfe-properties-code">00</dd>')
+                                .append($('<dd class="hfe-properties-code"/>')
+                                    .append('<input type="text" class="form-control hfe-insert-box" '
+                                        + 'style="max-width: 40%; display: inline-block; '
+                                        + 'vertical-align: top"/>')
+                                    .append('<button type="button" '
+                                        + 'class="btn btn-default btn-sm hfe-insert-button">Insert</button>')
+                                    .append('<button type="button" '
+                                        + 'class="btn btn-default btn-sm hfe-update-button">Update</button>')
+                                )
                                 .append('<dt>Hex</dt>')
                                 .append('<dd class="hfe-properties-hex">000000003E0808087F49494949494949</dd>')
                                 .append('<dt>Position</dt>')
@@ -278,6 +289,8 @@
             $element.find('.hfe-list-wrapper canvas').on('click', plugin.listOnClick);
 
             $element.find('.hfe-importexport-dialog-ok-button').on('click', plugin.doImport);
+            $element.find('.hfe-insert-button').on('click', plugin.doInsertChar);
+            $element.find('.hfe-update-button').on('click', plugin.doUpdateChar);
 
             $element.find('.hfe-font-import-item').on('click', function(evt){
                 evt.stopPropagation();
@@ -501,6 +514,16 @@
                 matrix = null;
                 theChar = null;
             }
+            else
+            {
+                $element.find('.hfe-list-wrapper canvas').drawLine({
+                    strokeStyle: plugin.settings.fontListCrossColor,
+                    x1: x * (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2),
+                    y1:  y * (plugin.settings.hexFontCharHeight + 2 * plugin.settings.fontListCharVerticalPadding + 2),
+                    x2: (x+1) * (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2),
+                    y2:  (y+1) * (plugin.settings.hexFontCharHeight + 2 * plugin.settings.fontListCharVerticalPadding + 2)
+                });
+            }
         };
 
         plugin.drawCharList = function()
@@ -621,7 +644,7 @@
         plugin.updateProps = function()
         {
             $element.find('.hfe-properties-hex').text(plugin.arrayToHex(plugin.charArray));
-            $element.find('.hfe-properties-code').text(plugin.charCode);
+            $element.find('.hfe-properties-code input').val(plugin.charCode);
         };
 
         plugin.clearChar = function()
@@ -729,9 +752,10 @@
         plugin.doImport = function()
         {
             plugin.chars = [];
-            console.log('doimport: val = ');
-            console.log($element.find('.hfe-importexport-dialog-hex').val());
+
             var lines = $element.find('.hfe-importexport-dialog-hex').val().split('\n');
+
+            plugin.doClearChar();
 
             for (var currentLine = 0; currentLine < lines.length; currentLine++)
             {
@@ -745,11 +769,95 @@
                 }
             }
 
+            if (plugin.chars.length == 0)
+            {
+                plugin.numberOfChars = 255;
+                plugin.generateSampleChars();
+            }
+
+            plugin.numberOfChars = plugin.chars.length;
+
+            plugin.charsPerRow = Math.floor(
+                (plugin.settings.fontListWidth - plugin.settings.fontListRightScrollbarPadding)
+                    / (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2));
+
+            plugin.fontListCanvasWidth =
+                (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2)
+                    * Math.floor(
+                    (plugin.settings.fontListWidth - plugin.settings.fontListRightScrollbarPadding)
+                        /  (plugin.settings.hexFontCharWidth + 2 * plugin.settings.fontListCharHorizontalPadding + 2));
+
+            plugin.numberOfCharRows = Math.ceil(plugin.numberOfChars  / plugin.charsPerRow);
+
+            plugin.fontListCanvasHeight =
+                (plugin.settings.hexFontCharHeight + 2 * plugin.settings.fontListCharVerticalPadding + 2)
+                    * plugin.numberOfCharRows;
+
+            $element.find('.hfe-list-wrapper-inner').css({
+                width: '' + plugin.fontListCanvasWidth + 'px',
+                height: '' + plugin.fontListCanvasHeight + 'px'
+            });
+            $element.find('.hfe-list-wrapper-inner canvas').prop('width', plugin.fontListCanvasWidth);
+            $element.find('.hfe-list-wrapper-inner canvas').prop('height', plugin.fontListCanvasHeight);
+            $element.find('.hfe-editor-container').css({
+                width: '' + (plugin.settings.charEditorWidth + plugin.charEditorHorizPadding + 2) + 'px',
+                'margin-left': '' + (plugin.settings.fontListWidth + plugin.fontListHorizPadding + 2
+                    + plugin.settings.listEditorGap) + 'px'
+            });
+            $element.find('.hfe-editor-wrapper').css({
+                width: '' + (plugin.settings.charEditorWidth + plugin.charEditorHorizPadding + 2) + 'px',
+                height: '' + (plugin.settings.charEditorHeight + plugin.charEditorVertPadding + 2) + 'px'
+            });
+            $element.find('.hfe-editor-wrapper canvas').prop('width', plugin.settings.charEditorWidth);
+            $element.find('.hfe-editor-wrapper canvas').prop('height', plugin.settings.charEditorHeight);
+
+            console.log(plugin);
+
             plugin.drawCharList();
             plugin.drawCharEditorBackground();
             plugin.updateCharFromList(0,0);
 
             lines = null;
+        };
+
+        plugin.doInsertChar = function()
+        {
+            var charCode = $element.find('.hfe-insert-box').val();
+
+            if (charCode != '')
+            {
+                plugin.chars.push({
+                    code: charCode,
+                    hex: '00000000000000000000000000000000'
+                });
+
+                plugin.drawCharList();
+                plugin.drawCharEditorBackground();
+
+                plugin.updateCharFromList(
+                    plugin.chars.length % plugin.charsPerRow,
+                    Math.floor(plugin.chars.length / plugin.charsPerRow)
+                );
+
+                plugin.updateProps();
+            }
+        };
+
+        plugin.doUpdateChar = function()
+        {
+            var charCode = $element.find('.hfe-insert-box').val();
+
+            if (charCode != '')
+            {
+                plugin.chars[plugin.selectedCharY * plugin.charsPerRow + plugin.selectedCharX].code = charCode;
+
+                plugin.updateCharFromList(
+                    plugin.selectedCharX,
+                    plugin.selectedCharY
+                );
+
+                plugin.updateProps();
+            }
         };
 
         plugin.init();

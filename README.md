@@ -17,6 +17,11 @@ Usage
 
 Check the file `examples/hexfonted.html` for more details.
 
+Screenshots
+-----------
+
+![Screenshot 1](/../screenshots/examples/screenshots/hexfonted-001.png?raw=true)
+
 Status changelog
 ----------------
 

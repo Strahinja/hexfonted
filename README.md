@@ -6,6 +6,15 @@ What is HexFontEd?
 
 HexFontEd is an editor of bitmap fonts in the hex format by Roman Czyborra (see [GNU Unifont](http://en.wikipedia.org/wiki/GNU_Unifont)), written in [jQuery](http://jquery.com/) and [Bootstrap](http://getbootstrap.com/).
 
+Usage
+-----
+
+1. Include jQuery, Bootstrap and HexFontEd CSS and JS.
+2. Create a `<div>`, for example `<div id="somename">`.
+3. Include a call to HexFontEd, for example `$('#somename').hexfonted()`.
+
+Check the file `examples/hexfonted.html` for more details.
+
 Status changelog
 ----------------
 

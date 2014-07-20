@@ -1,0 +1,99 @@
+/*!
+ * Copyright 2014 Strahinya Radich.
+ *
+ * This file is part of HexFontEd.
+ *
+ * HexFontEd is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * HexFontEd is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+.hfe-menu
+{
+}
+
+.hfe-list-wrapper
+{
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 5px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.hfe-editor-wrapper
+{
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 5px;
+    overflow: hidden;
+}
+
+.hfe-editor-wrapper canvas
+{
+    cursor: crosshair;
+}
+
+.hfe-list-container
+{
+    float: left;
+}
+
+.hfe-editor-container
+{
+}
+
+.hfe-editor-container .container,
+.hfe-editor-container .container-fluid
+{
+    clear: none !important;
+    padding: 0;
+}
+
+dl.hfe-properties
+{
+    position: absolute;
+    margin-top: 20px;
+}
+
+dl.hfe-properties:before,
+dl.hfe-properties:after
+{
+    content: '';
+    display: table;
+}
+
+dl.hfe-properties:after
+{
+    clear: both;
+}
+
+dl.hfe-properties
+{
+    *zoom: 1;
+}
+
+dl.hfe-properties dt
+{
+    font-weight: 600;
+    display: block;
+    float: left;
+    clear: both;
+    min-width: 100px;
+}
+
+dl.hfe-properties dd
+{
+    font-family: monospace;
+    display: block;
+    float: left;
+}

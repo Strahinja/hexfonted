@@ -20,5 +20,7 @@ Check the file `examples/hexfonted.html` for more details.
 Status changelog
 ----------------
 
+`2014-07-20` Added the import and export functions, as well as the character list.
+
 `2014-07-20` HexFontEd is in the early alpha stage. Only the character editor is
              (mostly) functional. Next up will be the character list.

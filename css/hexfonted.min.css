@@ -14,5 +14,5 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ * along with HexFontEd.  If not, see <http://www.gnu.org/licenses/>.
  */.hfe-list-wrapper{border:1px solid #ccc;border-radius:5px;padding:5px;overflow-y:scroll;overflow-x:hidden}.hfe-editor-wrapper{border:1px solid #ccc;border-radius:5px;padding:5px;overflow:hidden}.hfe-editor-wrapper canvas{cursor:crosshair}.hfe-list-container{float:left}.hfe-editor-container .container,.hfe-editor-container .container-fluid{clear:none !important;padding:0}dl.hfe-properties{position:absolute;margin-top:20px}dl.hfe-properties:before,dl.hfe-properties:after{content:'';display:table}dl.hfe-properties:after{clear:both}dl.hfe-properties{*zoom:1}dl.hfe-properties dt{font-weight:600;display:block;float:left;clear:both;min-width:100px}button,input[type="text"]{margin-right:5px}dl.hfe-properties dd{font-family:monospace;display:block;float:left}dl.hfe-properties dd button{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}.hfe-importexport-dialog-hex{font-family:monospace}

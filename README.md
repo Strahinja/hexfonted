@@ -25,7 +25,27 @@ Screenshots
 Status changelog
 ----------------
 
+`2014-07-23` Added licensing information to README.md and the wiki.
+
 `2014-07-20` Added the import and export functions, as well as the character list.
 
 `2014-07-20` HexFontEd is in the early alpha stage. Only the character editor is
              (mostly) functional. Next up will be the character list.
+
+License
+-------
+
+Copyright 2014 Strahinya Radich.
+
+HexFontEd is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HexFontEd is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Foobar. If not, see <http://www.gnu.org/licenses/>.
